@@ -50,7 +50,7 @@ async function run() {
             res.send(result);
         })
 
-        // update data 
+        // update car data 
         app.patch('/cars/:id',async(req,res)=>{
             const id = req.params.id;
             const updateCarData = req.body;
@@ -58,6 +58,12 @@ async function run() {
                 {_id: new ObjectId(id)},
                 {$set: updateCarData}
             )
+            res.send(result)
+        })
+        // delete car 
+        app.delete('/cars/:id',async(req,res)=>{
+            const id = req.params.id;
+            const result = await carsCollection.deleteOne({_id: new ObjectId(id)})
             res.send(result)
         })
 
@@ -72,6 +78,12 @@ async function run() {
         app.post('/carBookings',async(req,res)=>{
             const bookingData = req.body;
             const result = await carBookingsCollection.insertOne(bookingData);
+            res.send(result)
+        })
+        // delete booking
+        app.delete('/carBookings/:id',async(req,res)=>{
+            const id = req.params.id;
+            const result = await carBookingsCollection.deleteOne({_id: new ObjectId(id)});
             res.send(result)
         })
 
