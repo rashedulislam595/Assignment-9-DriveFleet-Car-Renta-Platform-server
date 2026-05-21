@@ -49,12 +49,12 @@ async function run() {
         const carsCollection = db.collection("Cars")
         const carBookingsCollection = db.collection("carBookings")
 
-        app.get('/cars',verifyToken,async(req,res)=>{
+        app.get('/cars',async(req,res)=>{
             const result = await carsCollection.find().toArray();
             res.send(result)
         })
         // get available cars data
-        app.get('/availableCars',verifyToken,async(req,res)=>{
+        app.get('/availableCars',async(req,res)=>{
             const result = await carsCollection.find().limit(6).toArray()
             res.send(result)
         })
