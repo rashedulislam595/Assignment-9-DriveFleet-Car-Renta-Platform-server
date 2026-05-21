@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require('jose-cjs');
 
 const app = express();
 dotenv.config()
@@ -20,25 +21,52 @@ const client = new MongoClient(uri, {
     }
 });
 
+const JWKS = createRemoteJWKSet(new URL(`${process.env.CLINT_URL}/api/auth/jwks`))
+
+const verifyToken = async(req,res,next)=>{
+    const authHeader = req?.headers.authorization
+    
+    if(!authHeader){
+        return res.status(401).json({message:"Unauthorized"})
+    }
+    const token = authHeader.split(" ")[1];
+    // console.log(token,"token")
+    if(!token){
+        return res.status(401).json({message:"Unauthorized"})
+    }
+    try{
+        const {payload} = await jwtVerify(token,JWKS)
+        next()
+    }catch(error) {
+        return res.status(403).json({message:'Forbidden'})
+    }
+}
+
 async function run() {
     try {
-        await client.connect();
+        // await client.connect();
         const db = client.db("DriveFleet");
         const carsCollection = db.collection("Cars")
         const carBookingsCollection = db.collection("carBookings")
 
-        app.get('/cars',async(req,res)=>{
+        app.get('/cars',verifyToken,async(req,res)=>{
             const result = await carsCollection.find().toArray();
             res.send(result)
         })
-        app.get('/cars/:id',async(req,res)=>{
+        // get available cars data
+        app.get('/availableCars',verifyToken,async(req,res)=>{
+            const result = await carsCollection.find().limit(6).toArray()
+            res.send(result)
+        })
+
+        app.get('/cars/:id',verifyToken,async(req,res)=>{
             const id = req.params.id
             const result = await carsCollection.findOne({_id:new ObjectId(id)});
             res.send(result)
         })
 
         // get data by specific user
-        app.get('/cars/user/:userId',async(req,res)=>{
+        app.get('/cars/user/:userId',verifyToken,async(req,res)=>{
             const userId = req.params.userId;
             const result = await carsCollection.find({userId}).toArray();
             res.send(result)
@@ -69,7 +97,7 @@ async function run() {
 
         // booking data 
         // get specific user booking data 
-        app.get('/carBookings/:userId',async(req,res)=>{
+        app.get('/carBookings/:userId',verifyToken,async(req,res)=>{
             const userId = req.params.userId;
             const result = await carBookingsCollection.find({userId}).toArray()
             res.send(result)
@@ -90,7 +118,7 @@ async function run() {
         
 
 
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // await client.close();
