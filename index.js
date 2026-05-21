@@ -37,13 +37,38 @@ async function run() {
             res.send(result)
         })
 
+        // get data by specific user
+        app.get('/cars/user/:userId',async(req,res)=>{
+            const userId = req.params.userId;
+            const result = await carsCollection.find({userId}).toArray();
+            res.send(result)
+        })
+
         app.post('/cars',async(req,res)=>{
             const carData = req.body;
             const result = await carsCollection.insertOne(carData);
             res.send(result);
         })
 
+        // update data 
+        app.patch('/cars/:id',async(req,res)=>{
+            const id = req.params.id;
+            const updateCarData = req.body;
+            const result = await carsCollection.updateOne(
+                {_id: new ObjectId(id)},
+                {$set: updateCarData}
+            )
+            res.send(result)
+        })
+
         // booking data 
+        // get specific user booking data 
+        app.get('/carBookings/:userId',async(req,res)=>{
+            const userId = req.params.userId;
+            const result = await carBookingsCollection.find({userId}).toArray()
+            res.send(result)
+        })
+        // post booking data
         app.post('/carBookings',async(req,res)=>{
             const bookingData = req.body;
             const result = await carBookingsCollection.insertOne(bookingData);
