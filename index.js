@@ -123,7 +123,17 @@ async function run() {
         app.post('/carBookings', async (req, res) => {
             const bookingData = req.body;
             const result = await carBookingsCollection.insertOne(bookingData);
-            res.send(result)
+
+            // book count 
+            const carId = bookingData.carId
+            const updateResult = await carsCollection.updateOne(
+                {_id: new ObjectId(carId)},
+                {
+                    $inc: { booking_count: 1 }
+                }
+            )
+
+            res.send({result,updateResult})
         })
         // delete booking
         app.delete('/carBookings/:id', async (req, res) => {
